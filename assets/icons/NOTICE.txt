@@ -1,0 +1,5 @@
+The Twitter bird icon is from Font Awesome Free 6.7.2 by Fonticons, Inc.
+Copyright © Fonticons, Inc. Licensed under CC BY 4.0.
+Source: https://github.com/FortAwesome/Font-Awesome/blob/6.7.2/svgs/brands/twitter.svg
+License: https://creativecommons.org/licenses/by/4.0/
+Adapted to a transparent PNG. Twitter is a trademark of its owner.

@@ -1,0 +1,45 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "gokawsay",
+          "appId": "1:71076166208:android:f1a4c8d19d9783e2513da5",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "gokawsay",
+          "configurations": {
+            "android": "1:71076166208:android:f1a4c8d19d9783e2513da5",
+            "ios": "1:71076166208:ios:0daf032530f3022b513da5"
+          }
+        }
+      }
+    }
+  },
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "singleProjectMode": true,
+    "ui": {
+      "enabled": false
+    },
+    "database": {
+      "port": 9000
+    }
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "supportEmail": "support@gokawsay.firebaseapp.com",
+        "oAuthBrandDisplayName": "GoKawsay"
+      }
+    }
+  }
+}

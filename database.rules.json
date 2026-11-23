@@ -1,0 +1,300 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && newData.exists()",
+        ".validate": "newData.hasChildren(['name','bio','role']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 80 && newData.child('bio').isString() && newData.child('bio').val().length >= 0 && newData.child('bio').val().length <= 350 && (!data.child('role').exists() || newData.child('role').val() === data.child('role').val())",
+        "name": {},
+        "bio": {},
+        "$other": {
+          ".validate": false
+        },
+        "role": {
+          ".validate": "newData.val() === 'landlord' || newData.val() === 'tenant'"
+        }
+      }
+    },
+    "rooms": {
+      ".read": "auth != null",
+      "$room": {
+        ".write": "auth != null && newData.exists() && ((!data.exists() && newData.child('owner').val() === auth.uid && newData.child('ownerName').val() === root.child('profiles').child(auth.uid).child('name').val() && root.child('profiles').child(auth.uid).child('role').val() === 'landlord' && newData.child('archived').val() !== true) || (data.exists() && data.child('owner').val() === auth.uid && data.child('archived').val() !== true && newData.child('owner').val() === data.child('owner').val() && newData.child('ownerName').val() === data.child('ownerName').val() && newData.child('example').val() === data.child('example').val()))",
+        ".validate": "newData.hasChildren(['owner','ownerName','title','location','description','monthly','deposit','available','photo']) && newData.child('owner').isString() && newData.child('owner').val().length >= 1 && newData.child('owner').val().length <= 128 && newData.child('ownerName').isString() && newData.child('ownerName').val().length >= 1 && newData.child('ownerName').val().length <= 80 && newData.child('title').isString() && newData.child('title').val().length >= 1 && newData.child('title').val().length <= 100 && newData.child('location').isString() && newData.child('location').val().length >= 1 && newData.child('location').val().length <= 180 && newData.child('description').isString() && newData.child('description').val().length >= 1 && newData.child('description').val().length <= 1600 && newData.child('monthly').isNumber() && newData.child('monthly').val() >= 1 && newData.child('monthly').val() <= 10000000 && newData.child('monthly').val() % 1 === 0 && newData.child('deposit').isBoolean() && newData.child('available').isBoolean() && newData.child('photo').isBoolean() && (!newData.hasChild('example') || newData.child('example').isBoolean()) && (newData.child('archived').val() !== true || (newData.child('available').val() === false && newData.child('photo').val() === false)) && (newData.child('photo').val() === newData.parent().parent().child('roomPhotos').child($room).exists()) && (!data.child('ubigeo').exists() || newData.child('ubigeo').exists())",
+        "owner": {},
+        "ownerName": {},
+        "title": {},
+        "location": {},
+        "description": {},
+        "monthly": {},
+        "deposit": {},
+        "available": {},
+        "photo": {},
+        "example": {},
+        "$other": {
+          ".validate": false
+        },
+        "ubigeo": {
+          ".validate": "newData.isString() && newData.val().matches(/^(080101|080102|080103|080104|080105|080106|080107|080108|080201|080202|080203|080204|080205|080206|080207|080301|080302|080303|080304|080305|080306|080307|080308|080309|080401|080402|080403|080404|080405|080406|080407|080408|080501|080502|080503|080504|080505|080506|080507|080508|080601|080602|080603|080604|080605|080606|080607|080608|080701|080702|080703|080704|080705|080706|080707|080708|080801|080802|080803|080804|080805|080806|080807|080808|080901|080902|080903|080904|080905|080906|080907|080908|080909|080910|080911|080912|080913|080914|080915|080916|080917|080918|081001|081002|081003|081004|081005|081006|081007|081008|081009|081101|081102|081103|081104|081105|081106|081201|081202|081203|081204|081205|081206|081207|081208|081209|081210|081211|081212|081301|081302|081303|081304|081305|081306|081307)$/)"
+        },
+        "neighborhood": {
+          ".validate": "newData.isString() && newData.val().length <= 70"
+        },
+        "photoRevision": {
+          ".validate": "newData.isString() && newData.val().matches(/^[-A-Za-z0-9_]{20}$/)"
+        },
+        "archived": {
+          ".validate": "newData.isBoolean()"
+        },
+        "coordinates": {
+          ".validate": "newData.hasChildren(['latitude','longitude'])",
+          "latitude": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "longitude": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "roomPhotos": {
+      "$room": {
+        ".write": "auth != null && root.child('rooms').child($room).child('archived').val() !== true && newData.parent().parent().child('rooms').child($room).child('owner').val() === auth.uid && (newData.parent().parent().child('rooms').child($room).child('photo').val() === newData.exists())",
+        ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 700000",
+        ".read": "auth != null && root.child('rooms').child($room).child('archived').val() !== true && (root.child('rooms').child($room).child('available').val() === true || root.child('rooms').child($room).child('owner').val() === auth.uid)"
+      }
+    },
+    "rentals": {
+      ".indexOn": [
+        "owner",
+        "tenant"
+      ],
+      ".read": "auth != null && ((query.orderByChild === 'owner' && query.equalTo === auth.uid) || (query.orderByChild === 'tenant' && query.equalTo === auth.uid))",
+      "$case": {
+        ".read": "auth != null && (data.child('owner').val() === auth.uid || data.child('tenant').val() === auth.uid)",
+        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('tenant').val() === auth.uid && $case === newData.child('roomId').val() + '_' + auth.uid && newData.child('owner').val() !== auth.uid && newData.child('owner').val() === root.child('rooms').child(newData.child('roomId').val()).child('owner').val() && root.child('rooms').child(newData.child('roomId').val()).child('available').val() === true && newData.child('tenantName').val() === root.child('profiles').child(auth.uid).child('name').val() && root.child('profiles').child(auth.uid).child('role').val() === 'tenant' && root.child('rooms').child(newData.child('roomId').val()).child('archived').val() !== true",
+        ".validate": "newData.hasChildren(['roomId','room','tenant','owner','tenantName','created']) && data.exists() || (!newData.hasChild('decision') && !newData.hasChild('cancelled') && !newData.hasChild('terms') && !newData.hasChild('entry') && !newData.hasChild('contract') && !newData.hasChild('deposit') && !newData.hasChild('checkoutStarted') && !newData.hasChild('exit') && !newData.hasChild('settlement') && !newData.hasChild('close') && !newData.hasChild('payments'))",
+        "roomId": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "room": {
+          ".validate": "newData.hasChildren(['owner','ownerName','title','location','description','monthly','deposit','available','photo']) && newData.child('owner').isString() && newData.child('owner').val().length >= 1 && newData.child('owner').val().length <= 128 && newData.child('ownerName').isString() && newData.child('ownerName').val().length >= 1 && newData.child('ownerName').val().length <= 80 && newData.child('title').isString() && newData.child('title').val().length >= 1 && newData.child('title').val().length <= 100 && newData.child('location').isString() && newData.child('location').val().length >= 1 && newData.child('location').val().length <= 180 && newData.child('description').isString() && newData.child('description').val().length >= 1 && newData.child('description').val().length <= 1600 && newData.child('monthly').isNumber() && newData.child('monthly').val() >= 1 && newData.child('monthly').val() <= 10000000 && newData.child('monthly').val() % 1 === 0 && newData.child('deposit').isBoolean() && newData.child('available').isBoolean() && newData.child('photo').isBoolean() && (!newData.hasChild('example') || newData.child('example').isBoolean()) && (data.exists() || (newData.child('owner').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('owner').val() && newData.child('ownerName').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('ownerName').val() && newData.child('title').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('title').val() && newData.child('location').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('location').val() && newData.child('description').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('description').val() && newData.child('monthly').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('monthly').val() && newData.child('deposit').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('deposit').val() && newData.child('available').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('available').val() && newData.child('photo').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('photo').val() && newData.child('example').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('example').val() && newData.child('ubigeo').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('ubigeo').val() && newData.child('neighborhood').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('neighborhood').val() && newData.child('photoRevision').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('photoRevision').val() && newData.child('archived').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('archived').val() && newData.child('coordinates/latitude').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('coordinates/latitude').val() && newData.child('coordinates/longitude').val() === root.child('rooms').child(newData.parent().child('roomId').val()).child('coordinates/longitude').val()))",
+          "owner": {},
+          "ownerName": {},
+          "title": {},
+          "location": {},
+          "description": {},
+          "monthly": {},
+          "deposit": {},
+          "available": {},
+          "photo": {},
+          "example": {},
+          "$other": {
+            ".validate": false
+          },
+          "ubigeo": {
+            ".validate": "newData.isString() && newData.val().matches(/^(080101|080102|080103|080104|080105|080106|080107|080108|080201|080202|080203|080204|080205|080206|080207|080301|080302|080303|080304|080305|080306|080307|080308|080309|080401|080402|080403|080404|080405|080406|080407|080408|080501|080502|080503|080504|080505|080506|080507|080508|080601|080602|080603|080604|080605|080606|080607|080608|080701|080702|080703|080704|080705|080706|080707|080708|080801|080802|080803|080804|080805|080806|080807|080808|080901|080902|080903|080904|080905|080906|080907|080908|080909|080910|080911|080912|080913|080914|080915|080916|080917|080918|081001|081002|081003|081004|081005|081006|081007|081008|081009|081101|081102|081103|081104|081105|081106|081201|081202|081203|081204|081205|081206|081207|081208|081209|081210|081211|081212|081301|081302|081303|081304|081305|081306|081307)$/)"
+          },
+          "neighborhood": {
+            ".validate": "newData.isString() && newData.val().length <= 70"
+          },
+          "photoRevision": {
+            ".validate": "newData.isString() && newData.val().matches(/^[-A-Za-z0-9_]{20}$/)"
+          },
+          "archived": {
+            ".validate": "newData.isBoolean()"
+          },
+          "coordinates": {
+            ".validate": "newData.hasChildren(['latitude','longitude'])",
+            "latitude": {
+              ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+            },
+            "longitude": {
+              ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "tenant": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+        },
+        "owner": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+        },
+        "tenantName": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80"
+        },
+        "created": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        },
+        "decision": {
+          ".write": "auth != null && !data.exists() && newData.exists() && data.parent().child('owner').val() === auth.uid && (newData.val() === 'declined' || newData.parent().parent().parent().child('roomSelections').child(data.parent().child('roomId').val()).val() === $case)",
+          ".validate": "newData.val() === 'selected' || newData.val() === 'declined'"
+        },
+        "terms": {
+          ".write": "auth != null && !data.parent().child('contract').exists() && newData.exists() && data.parent().child('owner').val() === auth.uid && data.parent().child('decision').val() === 'selected' && data.parent().child('cancelled').val() !== true",
+          ".validate": "newData.hasChildren(['start','end','guarantee','note']) && newData.child('start').isNumber() && newData.child('start').val() >= 1 && newData.child('start').val() <= 4102444800000 && newData.child('start').val() % 1 === 0 && newData.child('end').isNumber() && newData.child('end').val() >= 1 && newData.child('end').val() <= 4102444800000 && newData.child('end').val() % 1 === 0 && newData.child('end').val() > newData.child('start').val() && newData.child('guarantee').isNumber() && newData.child('guarantee').val() >= 0 && newData.child('guarantee').val() <= 10000000 && newData.child('guarantee').val() % 1 === 0 && (data.parent().child('room/deposit').val() === true || newData.child('guarantee').val() === 0) && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350",
+          "start": {},
+          "end": {},
+          "guarantee": {},
+          "note": {},
+          "$other": {
+            ".validate": false
+          }
+        },
+        "entry": {
+          "$uid": {
+            ".write": "auth != null && !data.exists() && newData.exists() && $uid === auth.uid && (data.parent().parent().child('owner').val() === auth.uid || data.parent().parent().child('tenant').val() === auth.uid) && data.parent().parent().child('decision').val() === 'selected' && data.parent().parent().child('terms').exists() && data.parent().parent().child('cancelled').val() !== true",
+            ".validate": "newData.hasChildren(['walls','services','furniture','note','at','photo']) && (newData.child('walls').val() === 'ok' || newData.child('walls').val() === 'observed') && (newData.child('services').val() === 'ok' || newData.child('services').val() === 'observed') && (newData.child('furniture').val() === 'ok' || newData.child('furniture').val() === 'observed') && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350 && newData.child('at').isNumber() && newData.child('at').val() <= now && (!newData.hasChild('photo') || (newData.child('photo').isString() && newData.child('photo').val().matches(/^[-A-Za-z0-9_]{20}$/))) && (!newData.hasChild('photo') || newData.parent().parent().parent().parent().child('rentalPhotos').child($case).child(newData.child('photo').val()).exists()) && ((newData.child('walls').val() === 'ok' && newData.child('services').val() === 'ok' && newData.child('furniture').val() === 'ok') || newData.child('note').val().length > 0)",
+            "walls": {},
+            "services": {},
+            "furniture": {},
+            "note": {},
+            "at": {},
+            "photo": {},
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "contract": {
+          "$uid": {
+            ".write": "auth != null && !data.exists() && newData.exists() && $uid === auth.uid && (data.parent().parent().child('owner').val() === auth.uid || data.parent().parent().child('tenant').val() === auth.uid) && data.parent().parent().child('decision').val() === 'selected' && data.parent().parent().child('terms').exists() && data.parent().parent().child('entry').child(data.parent().parent().child('owner').val()).exists() && data.parent().parent().child('entry').child(data.parent().parent().child('tenant').val()).exists() && data.parent().parent().child('cancelled').val() !== true",
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          }
+        },
+        "deposit": {
+          "$uid": {
+            ".write": "auth != null && !data.exists() && newData.exists() && $uid === auth.uid && (data.parent().parent().child('owner').val() === auth.uid || data.parent().parent().child('tenant').val() === auth.uid) && data.parent().parent().child('contract').child(data.parent().parent().child('owner').val()).exists() && data.parent().parent().child('contract').child(data.parent().parent().child('tenant').val()).exists() && data.parent().parent().child('terms/guarantee').val() > 0 && (data.parent().parent().child('tenant').val() === auth.uid || data.parent().parent().child('deposit').child(data.parent().parent().child('tenant').val()).exists())",
+            ".validate": "newData.hasChildren(['note','at']) && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350 && newData.child('at').isNumber() && newData.child('at').val() <= now && (!newData.hasChild('photo') || (newData.child('photo').isString() && newData.child('photo').val().matches(/^[-A-Za-z0-9_]{20}$/))) && (!newData.hasChild('photo') || newData.parent().parent().parent().parent().child('rentalPhotos').child($case).child(newData.child('photo').val()).exists())",
+            "note": {},
+            "at": {},
+            "photo": {},
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "checkoutStarted": {
+          ".write": "auth != null && !data.exists() && newData.exists() && (data.parent().child('owner').val() === auth.uid || data.parent().child('tenant').val() === auth.uid) && data.parent().child('contract').child(data.parent().child('owner').val()).exists() && data.parent().child('contract').child(data.parent().child('tenant').val()).exists() && (data.parent().child('terms/guarantee').val() === 0 || (data.parent().child('deposit').child(data.parent().child('owner').val()).exists() && data.parent().child('deposit').child(data.parent().child('tenant').val()).exists()))",
+          ".validate": "newData.val() === true"
+        },
+        "exit": {
+          "$uid": {
+            ".write": "auth != null && !data.exists() && newData.exists() && $uid === auth.uid && (data.parent().parent().child('owner').val() === auth.uid || data.parent().parent().child('tenant').val() === auth.uid) && data.parent().parent().child('checkoutStarted').val() === true",
+            ".validate": "newData.hasChildren(['walls','services','furniture','note','at','photo']) && (newData.child('walls').val() === 'ok' || newData.child('walls').val() === 'observed') && (newData.child('services').val() === 'ok' || newData.child('services').val() === 'observed') && (newData.child('furniture').val() === 'ok' || newData.child('furniture').val() === 'observed') && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350 && newData.child('at').isNumber() && newData.child('at').val() <= now && (!newData.hasChild('photo') || (newData.child('photo').isString() && newData.child('photo').val().matches(/^[-A-Za-z0-9_]{20}$/))) && (!newData.hasChild('photo') || newData.parent().parent().parent().parent().child('rentalPhotos').child($case).child(newData.child('photo').val()).exists()) && ((newData.child('walls').val() === 'ok' && newData.child('services').val() === 'ok' && newData.child('furniture').val() === 'ok') || newData.child('note').val().length > 0)",
+            "walls": {},
+            "services": {},
+            "furniture": {},
+            "note": {},
+            "at": {},
+            "photo": {},
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "settlement": {
+          ".write": "auth != null && !data.parent().child('close').exists() && newData.exists() && data.parent().child('owner').val() === auth.uid && data.parent().child('exit').child(data.parent().child('owner').val()).exists() && data.parent().child('exit').child(data.parent().child('tenant').val()).exists()",
+          ".validate": "newData.hasChildren(['refund','balance','note']) && newData.child('refund').isNumber() && newData.child('refund').val() >= 0 && newData.child('refund').val() <= 10000000 && newData.child('refund').val() % 1 === 0 && newData.child('refund').val() <= data.parent().child('terms/guarantee').val() && newData.child('balance').isNumber() && newData.child('balance').val() >= 0 && newData.child('balance').val() <= 10000000 && newData.child('balance').val() % 1 === 0 && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350 && (newData.child('refund').val() === data.parent().child('terms/guarantee').val() || newData.child('note').val().length > 0)",
+          "refund": {},
+          "balance": {},
+          "note": {},
+          "$other": {
+            ".validate": false
+          }
+        },
+        "close": {
+          "$uid": {
+            ".write": "auth != null && !data.exists() && newData.exists() && $uid === auth.uid && (data.parent().parent().child('owner').val() === auth.uid || data.parent().parent().child('tenant').val() === auth.uid) && data.parent().parent().child('settlement').exists()",
+            ".validate": "newData.hasChildren(['note','at']) && newData.child('note').isString() && newData.child('note').val().length >= 0 && newData.child('note').val().length <= 350 && newData.child('at').isNumber() && newData.child('at').val() <= now && (!newData.hasChild('photo') || (newData.child('photo').isString() && newData.child('photo').val().matches(/^[-A-Za-z0-9_]{20}$/))) && (!newData.hasChild('photo') || newData.parent().parent().parent().parent().child('rentalPhotos').child($case).child(newData.child('photo').val()).exists())",
+            "note": {},
+            "at": {},
+            "photo": {},
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "payments": {
+          "$payment": {
+            "record": {
+              ".write": "auth != null && !data.exists() && newData.exists() && data.parent().parent().parent().child('tenant').val() === auth.uid && data.parent().parent().parent().child('contract').child(data.parent().parent().parent().child('owner').val()).exists() && data.parent().parent().parent().child('contract').child(data.parent().parent().parent().child('tenant').val()).exists() && (data.parent().parent().parent().child('terms/guarantee').val() === 0 || (data.parent().parent().parent().child('deposit').child(data.parent().parent().parent().child('owner').val()).exists() && data.parent().parent().parent().child('deposit').child(data.parent().parent().parent().child('tenant').val()).exists())) && !(data.parent().parent().parent().child('close').child(data.parent().parent().parent().child('owner').val()).exists() && data.parent().parent().parent().child('close').child(data.parent().parent().parent().child('tenant').val()).exists())",
+              ".validate": "newData.hasChildren(['amount','note','at']) && newData.child('amount').isNumber() && newData.child('amount').val() >= 1 && newData.child('amount').val() <= 10000000 && newData.child('amount').val() % 1 === 0 && newData.child('note').isString() && newData.child('note').val().length >= 1 && newData.child('note').val().length <= 350 && newData.child('at').isNumber() && newData.child('at').val() <= now && (!newData.hasChild('photo') || (newData.child('photo').isString() && newData.child('photo').val().matches(/^[-A-Za-z0-9_]{20}$/))) && (!newData.hasChild('photo') || newData.parent().parent().parent().parent().parent().child('rentalPhotos').child($case).child(newData.child('photo').val()).exists())",
+              "amount": {},
+              "note": {},
+              "at": {},
+              "photo": {},
+              "$other": {
+                ".validate": false
+              }
+            },
+            "confirmed": {
+              ".write": "auth != null && !data.exists() && newData.exists() && data.parent().parent().parent().child('owner').val() === auth.uid && data.parent().child('record').exists() && !(data.parent().parent().parent().child('close').child(data.parent().parent().parent().child('owner').val()).exists() && data.parent().parent().parent().child('close').child(data.parent().parent().parent().child('tenant').val()).exists())",
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        },
+        "cancelled": {
+          ".write": "auth != null && !data.exists() && newData.val() === true && data.parent().child('decision').val() === 'selected' && (data.parent().child('owner').val() === auth.uid || data.parent().child('tenant').val() === auth.uid) && !(data.parent().child('contract').child(data.parent().child('owner').val()).exists() && data.parent().child('contract').child(data.parent().child('tenant').val()).exists())"
+        }
+      }
+    },
+    "messages": {
+      "$case": {
+        ".indexOn": [
+          "sent"
+        ],
+        ".read": "auth != null && (root.child('rentals').child($case).child('owner').val() === auth.uid || root.child('rentals').child($case).child('tenant').val() === auth.uid)",
+        "$message": {
+          ".write": "auth != null && !data.exists() && newData.exists() && (root.child('rentals').child($case).child('owner').val() === auth.uid || root.child('rentals').child($case).child('tenant').val() === auth.uid) && newData.child('sender').val() === auth.uid",
+          ".validate": "newData.hasChildren(['sender','text','sent']) && newData.child('text').isString() && newData.child('text').val().length >= 1 && newData.child('text').val().length <= 1000 && newData.child('sent').isNumber() && newData.child('sent').val() <= now",
+          "sender": {},
+          "text": {},
+          "sent": {},
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "rentalPhotos": {
+      "$case": {
+        ".read": "auth != null && (root.child('rentals').child($case).child('owner').val() === auth.uid || root.child('rentals').child($case).child('tenant').val() === auth.uid)",
+        "$photo": {
+          ".write": "auth != null && !data.exists() && newData.exists() && (root.child('rentals').child($case).child('owner').val() === auth.uid || root.child('rentals').child($case).child('tenant').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 700000"
+        }
+      }
+    },
+    "roomSelections": {
+      "$room": {
+        ".write": "auth != null && newData.isString() && root.child('rooms').child($room).child('owner').val() === auth.uid && (!data.exists() || root.child('rentals').child(data.val()).child('cancelled').val() === true || (root.child('rentals').child(data.val()).child('close').child(root.child('rentals').child(data.val()).child('tenant').val()).exists() && root.child('rentals').child(data.val()).child('close').child(auth.uid).exists())) && newData.parent().parent().child('rentals').child(newData.val()).child('roomId').val() === $room && newData.parent().parent().child('rentals').child(newData.val()).child('decision').val() === 'selected' && newData.parent().parent().child('rooms').child($room).child('archived').val() !== true"
+      }
+    },
+    "accountAccess": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "trial": {
+          ".write": "auth != null && auth.uid === $uid && ((!data.exists() && newData.isString() && newData.val().matches(/^[-A-Za-z0-9_]{20}$/)) || (data.isString() && data.val() !== 'ended' && newData.val() === 'ended'))"
+        },
+        "enabled": {
+          ".write": false,
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+}
