@@ -115,6 +115,10 @@ class _PrivacyPage extends StatelessWidget {
         subtitle: 'La conexión permite sincronizar publicaciones, solicitudes y mensajes. El historial del alquiler y su conversación están disponibles para las partes correspondientes.',
       ),
       const SectionTitle(
+        'Calificaciones',
+        subtitle: 'Al cerrar un alquiler, cada participante puede calificar a la otra persona de una a cinco estrellas. Las puntuaciones y su promedio son visibles para las personas que iniciaron sesión en GoKawsay.',
+      ),
+      const SectionTitle(
         'Permisos del dispositivo',
         subtitle: 'Consulta los permisos concedidos desde los ajustes del teléfono, en la ficha de GoKawsay.',
       ),
@@ -169,7 +173,6 @@ class _DeveloperCredit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const email = 'zavalapisxlpo@gmail.com';
     const github = 'AldairToSayH';
     final theme = Theme.of(context);
     final caption = theme.textTheme.bodySmall?.copyWith(
@@ -184,30 +187,13 @@ class _DeveloperCredit extends StatelessWidget {
           style: caption,
           textAlign: TextAlign.center,
         ),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 6,
-          children: [
-            TextButton(
-              style: TextButton.styleFrom(
-                textStyle: theme.textTheme.labelMedium,
-              ),
-              onPressed: () =>
-                  openExternal(context, Uri(scheme: 'mailto', path: email)),
-              child: const Text(email, textAlign: TextAlign.center),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                textStyle: theme.textTheme.labelMedium,
-              ),
-              onPressed: () =>
-                  openExternal(context, Uri.https('github.com', '/$github')),
-              child: const Text(
-                'GitHub · $github',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+        Center(
+          child: TextButton(
+            style: TextButton.styleFrom(textStyle: theme.textTheme.labelMedium),
+            onPressed: () =>
+                openExternal(context, Uri.https('github.com', '/$github')),
+            child: const Text('GitHub · $github', textAlign: TextAlign.center),
+          ),
         ),
       ],
     );

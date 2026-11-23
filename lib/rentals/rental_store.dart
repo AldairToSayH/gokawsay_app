@@ -58,6 +58,33 @@ class RentalStore {
   Stream<Rental?> rental(String id) =>
       _watch(_case(id)).map((data) => data.isEmpty ? null : Rental(id, data));
 
+  Stream<RatingSummary> ratingSummary(String uid) =>
+      _watch(_root.child('ratings/$uid')).map(RatingSummary.fromData);
+
+  Stream<int?> rentalRating(String uid, String rentalId) =>
+      _watch(_root.child('ratings/$uid/$rentalId'))
+          .map((data) => (data['score'] as num?)?.toInt());
+
+  Future<void> rateRental(Rental rental, String uid, int score) async {
+    if (rental.phase != RentalPhase.closed ||
+        (uid != rental.owner && uid != rental.tenant)) {
+      throw StateError('El alquiler debe estar cerrado por ambas partes.');
+    }
+    RangeError.checkValueInInterval(score, 1, 5, 'score');
+    final target = rental.counterpartUid(uid);
+    await _root
+        .child('ratings/$target/${rental.id}')
+        .runTransaction(
+          (current) => current == null
+              ? Transaction.success({
+                  'score': score,
+                  'at': ServerValue.timestamp,
+                })
+              : Transaction.abort(),
+          applyLocally: false,
+        );
+  }
+
   Stream<List<ChatMessage>> messages(String id) =>
       _watch(_root.child('messages/$id').orderByChild('sent').limitToLast(200))
           .map((data) {

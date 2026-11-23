@@ -284,6 +284,24 @@
         ".write": "auth != null && newData.isString() && root.child('rooms').child($room).child('owner').val() === auth.uid && (!data.exists() || root.child('rentals').child(data.val()).child('cancelled').val() === true || (root.child('rentals').child(data.val()).child('close').child(root.child('rentals').child(data.val()).child('tenant').val()).exists() && root.child('rentals').child(data.val()).child('close').child(auth.uid).exists())) && newData.parent().parent().child('rentals').child(newData.val()).child('roomId').val() === $room && newData.parent().parent().child('rentals').child(newData.val()).child('decision').val() === 'selected' && newData.parent().parent().child('rooms').child($room).child('archived').val() !== true"
       }
     },
+    "ratings": {
+      "$uid": {
+        ".read": "auth != null",
+        "$rental": {
+          ".write": "auth != null && !data.exists() && newData.exists() && root.child('rentals').child($rental).child('decision').val() === 'selected' && root.child('rentals').child($rental).child('cancelled').val() !== true && root.child('rentals').child($rental).child('close').child(root.child('rentals').child($rental).child('owner').val()).exists() && root.child('rentals').child($rental).child('close').child(root.child('rentals').child($rental).child('tenant').val()).exists() && (($uid === root.child('rentals').child($rental).child('owner').val() && auth.uid === root.child('rentals').child($rental).child('tenant').val()) || ($uid === root.child('rentals').child($rental).child('tenant').val() && auth.uid === root.child('rentals').child($rental).child('owner').val()))",
+          ".validate": "newData.hasChildren(['score','at'])",
+          "score": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && newData.val() % 1 === 0"
+          },
+          "at": {
+            ".validate": "newData.isNumber() && newData.val() <= now && newData.val() >= now - 60000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
     "accountAccess": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

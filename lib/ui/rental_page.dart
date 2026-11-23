@@ -6,6 +6,7 @@ import '../rentals/models.dart';
 import '../rentals/rental_store.dart';
 import 'components.dart';
 import 'motion.dart';
+import 'ratings.dart';
 import 'theme.dart';
 
 class RentalPage extends StatefulWidget {
@@ -83,6 +84,8 @@ class RentalDetails extends StatelessWidget {
   Widget build(BuildContext context) => PageList(
     children: [
       RentalHeader(rental: rental),
+      const SizedBox(height: 12),
+      UserRating(store: store, uid: rental.counterpartUid(uid)),
       const SizedBox(height: 12),
       OutlinedButton.icon(
         onPressed: () => _open(
@@ -433,6 +436,12 @@ class RentalDetails extends StatelessWidget {
         ];
       case RentalPhase.closed:
         return [
+          RentalRatingPanel(
+            key: ValueKey('${rental.id}/$uid'),
+            rental: rental,
+            store: store,
+            uid: uid,
+          ),
           const EmptyState(
             'Alquiler cerrado',
             'Ambas partes confirmaron el cierre. Aquí queda el contrato y el historial completo.',

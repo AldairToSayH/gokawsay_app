@@ -11,6 +11,7 @@ import 'components.dart';
 import 'google_account.dart';
 import 'location_fields.dart';
 import 'profile_information.dart';
+import 'ratings.dart';
 import 'room_editor.dart';
 import 'room_map.dart';
 import 'motion.dart';
@@ -624,7 +625,17 @@ class _SignedInState extends State<SignedIn> {
       title: Text(
         rental.isOwner(profile.uid) ? rental.tenantName : rental.room.title,
       ),
-      subtitle: Text(rental.phase.label),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 4,
+        children: [
+          Text(rental.phase.label),
+          UserRating(
+            store: widget.store,
+            uid: rental.counterpartUid(profile.uid),
+          ),
+        ],
+      ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -666,6 +677,15 @@ class _SignedInState extends State<SignedIn> {
                 ),
               ),
             ),
+          ),
+        ),
+        Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('Tu calificación'),
+              UserRating(store: widget.store, uid: profile.uid),
+            ],
           ),
         ),
         if (profile.role == ProfileRole.tenant &&
@@ -1126,6 +1146,10 @@ class _RoomDetails extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
+            const Divider(),
+            SectionTitle('Arrendador', subtitle: room.ownerName),
+            UserRating(store: store, uid: room.owner),
+            const SizedBox(height: 12),
             const Divider(),
             SectionTitle('Sobre la habitación', subtitle: room.description),
             if (room.preciseLocation case final location?

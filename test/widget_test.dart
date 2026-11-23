@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gokawsay/rentals/models.dart';
 import 'package:gokawsay/rentals/rental_store.dart';
 import 'package:gokawsay/ui/app.dart';
 import 'package:gokawsay/ui/rental_page.dart';
+import 'package:gokawsay/ui/ratings.dart';
 import 'package:material_ui/material_ui.dart';
 
 class UnusedDatabase implements FirebaseDatabase {
@@ -17,6 +20,10 @@ class RecordingProfileStore extends RentalStore {
   ProfileRole? savedRole;
 
   @override
+  Stream<RatingSummary> ratingSummary(String uid) =>
+      Stream.value(const RatingSummary());
+
+  @override
   Future<void> saveProfile(
     String uid,
     String name,
@@ -25,6 +32,30 @@ class RecordingProfileStore extends RentalStore {
   ) async {
     savedRole = role;
   }
+}
+
+class RecordingRatingStore extends RecordingProfileStore {
+  RecordingRatingStore() {
+    _rating.add(null);
+  }
+
+  final _rating = StreamController<int?>();
+  int submissions = 0;
+  int? submittedScore;
+  String? submittedUid;
+
+  @override
+  Stream<int?> rentalRating(String uid, String rentalId) => _rating.stream;
+
+  @override
+  Future<void> rateRental(Rental rental, String uid, int score) async {
+    submissions++;
+    submittedScore = score;
+    submittedUid = uid;
+    _rating.add(score);
+  }
+
+  Future<void> dispose() => _rating.close();
 }
 
 const room = {
@@ -87,7 +118,7 @@ void main() {
   testWidgets('The manual selection is offered only to the landlord', (
     tester,
   ) async {
-    final store = RentalStore(UnusedDatabase());
+    final store = RecordingProfileStore();
     Widget screen(String uid) => MaterialApp(
       home: Scaffold(
         body: RentalDetails(
@@ -127,6 +158,72 @@ void main() {
     };
     expect(Rental('room_lucia', data).phase, RentalPhase.closed);
   });
+
+  test('Ratings average verified scores and handle a new account', () {
+    final summary = RatingSummary.fromData({
+      'first': {'score': 5},
+      'second': {'score': 4},
+    });
+    expect(summary.count, 2);
+    expect(summary.average, 4.5);
+    expect(RatingSummary.fromData({}).count, 0);
+    expect(RatingSummary.fromData({}).average, 0);
+  });
+
+  for (final uid in ['mateo', 'lucia']) {
+    testWidgets('A closed rental accepts and shows a single rating from $uid', (
+      tester,
+    ) async {
+      final store = RecordingRatingStore();
+      addTearDown(store.dispose);
+      const rental = Rental('room_lucia', {
+        ...header,
+        'decision': 'selected',
+        'terms': terms,
+        'entry': approved,
+        'contract': approved,
+        'deposit': approved,
+        'checkoutStarted': true,
+        'exit': approved,
+        'close': approved,
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ListView(
+              children: [
+                RentalRatingPanel(rental: rental, store: store, uid: uid),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Enviar calificación'),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byKey(const ValueKey('rating-star-5')));
+      await tester.pump();
+      await tester.tap(find.text('Enviar calificación'));
+      await tester.pumpAndSettle();
+      expect(store.submissions, 1);
+      expect(store.submittedScore, 5);
+      expect(store.submittedUid, uid);
+      expect(find.text('Tu calificación fue enviada'), findsOneWidget);
+      expect(find.text('Enviar calificación'), findsNothing);
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const ValueKey('rating-star-1')))
+            .onPressed,
+        isNull,
+      );
+    });
+  }
 
   testWidgets('The contract shows agreed amounts and both names', (
     tester,

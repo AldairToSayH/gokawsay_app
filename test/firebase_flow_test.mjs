@@ -92,6 +92,10 @@ async function apply(tenant, options) {
 }
 
 const [first, second] = await Promise.all([apply(lucia), apply(diego)]);
+const ownerRating = `ratings/${owner.uid}/${first}`;
+const tenantRating = `ratings/${lucia.uid}/${first}`;
+const rating = { score: 5, at: serverTime };
+await request('PUT', ownerRating, lucia, rating, denied);
 const editedRoom = {
   title: 'Habitación cerca de Písac', monthly: 57000,
   location: 'Písac, Calca, Cusco', ubigeo: '080405', neighborhood: '',
@@ -166,11 +170,37 @@ await inspect('exit', lucia);
 await write('settlement', owner, { balance: 0, refund: 50001, note: '' }, denied);
 await write('settlement', owner, { balance: 3000, refund: 45000, note: 'Descuento acordado' });
 await write(`close/${owner.uid}`, owner, { note: 'Saldo recibido y garantía devuelta', at: serverTime });
+await request('PUT', ownerRating, lucia, rating, denied);
 await select(second, owner, denied);
 await write(`close/${lucia.uid}`, lucia, { note: 'Saldo pagado y devolución recibida', at: serverTime });
+await request('PUT', ownerRating, undefined, rating, denied);
+await request('PUT', ownerRating, diego, rating, denied);
+await request('PUT', ownerRating, owner, rating, denied);
+await request('PUT', `ratings/${diego.uid}/${first}`, lucia, rating, denied);
+await request('PUT', `ratings/${owner.uid}/missing-rental`, lucia, rating, denied);
+for (const score of [0, 6, 2.5, '5']) {
+  await request('PUT', ownerRating, lucia, { ...rating, score }, denied);
+}
+await request('PUT', ownerRating, lucia, { score: 5 }, denied);
+await request('PUT', ownerRating, lucia, { ...rating, at: Date.now() + 3600000 }, denied);
+await request('PUT', ownerRating, lucia, { ...rating, comment: 'Campo adicional' }, denied);
+await Promise.all([
+  request('PUT', ownerRating, lucia, rating),
+  request('PUT', tenantRating, owner, { ...rating, score: 4 }),
+]);
+await request('PUT', ownerRating, lucia, { ...rating, score: 3 }, denied);
+await request('PATCH', ownerRating, lucia, { score: 3 }, denied);
+await request('DELETE', ownerRating, lucia, undefined, denied);
+await request('DELETE', `ratings/${owner.uid}`, owner, undefined, denied);
+await request('GET', `ratings/${owner.uid}`, undefined, undefined, denied);
+await request('GET', 'ratings', diego, undefined, denied);
+assert.equal((await request('GET', `ratings/${owner.uid}`, diego))[first].score, 5);
+assert.equal((await request('GET', `ratings/${lucia.uid}`, lucia))[first].score, 4);
+await request('GET', `rentals/${first}`, diego, undefined, denied);
 await write('payments/extra/record', lucia, { amount: 52000, note: 'Extra', at: serverTime }, denied);
 await select(second, owner);
 await request('PUT', `rentals/${second}/cancelled`, diego, true);
+await request('PUT', `ratings/${owner.uid}/${second}`, diego, rating, denied);
 await request('PATCH', '', owner, {
   [`rooms/${roomId}/archived`]: true,
   [`rooms/${roomId}/available`]: false,
@@ -186,3 +216,4 @@ assert.deepEqual(Object.keys(closed.close).sort(), [owner.uid, lucia.uid].sort()
 assert.equal(closed.settlement.refund, 45000);
 console.log('Verified: two requests, private chats and evidence, manual selection, agreement, both inspections, contract, deposit, rent, refund, and two-party close.');
 console.log('Verified: a previously blocked account completes the rental flow. Anonymous and unrelated users cannot access private records.');
+console.log('Verified: both participants rate once after both close, only integer scores 1–5 are accepted, and private rental data stays protected.');

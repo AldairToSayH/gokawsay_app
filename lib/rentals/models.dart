@@ -108,6 +108,7 @@ class Rental {
   Fields get payments => fields(data['payments']);
 
   bool isOwner(String uid) => uid == owner;
+  String counterpartUid(String uid) => isOwner(uid) ? tenant : owner;
   String counterpart(String uid) => isOwner(uid) ? tenantName : room.ownerName;
   Fields section(String key) => fields(data[key]);
   bool both(String key) =>
@@ -125,6 +126,28 @@ class Rental {
     if (!both('close')) return RentalPhase.settlement;
     return RentalPhase.closed;
   }
+}
+
+class RatingSummary {
+  const RatingSummary({this.count = 0, this.total = 0});
+
+  factory RatingSummary.fromData(Fields data) {
+    var count = 0;
+    var total = 0;
+    for (final value in data.values) {
+      final score = fields(value)['score'];
+      if (score is num && score >= 1 && score <= 5 && score % 1 == 0) {
+        count++;
+        total += score.toInt();
+      }
+    }
+    return RatingSummary(count: count, total: total);
+  }
+
+  final int count;
+  final int total;
+
+  double get average => count == 0 ? 0 : total / count;
 }
 
 class ChatMessage {
